@@ -22,17 +22,19 @@ impl KeyPair {
     }
 }
 
-pub fn generate() -> KeyPair {
-    let mut seed = [0u8; 32];
-    getrandom::getrandom(&mut seed).expect("couldn't generate random seed");
+impl KeyPair {
+    pub fn random() -> KeyPair {
+        let mut seed = [0u8; 32];
+        getrandom::getrandom(&mut seed).expect("couldn't generate random seed");
 
-    // TODO: Add rng support
-    let secret_key = SecretKey::parse(&seed).unwrap();
-    let public_key = PublicKey::from_secret_key(&secret_key);
+        // TODO: Add rng support
+        let secret_key = SecretKey::parse(&seed).unwrap();
+        let public_key = PublicKey::from_secret_key(&secret_key);
 
-    KeyPair {
-        public_key,
-        secret_key: Some(secret_key),
+        KeyPair {
+            public_key,
+            secret_key: Some(secret_key),
+        }
     }
 }
 
@@ -40,7 +42,7 @@ pub fn generate() -> KeyPair {
 mod test {
     #[test]
     fn generate_random_key() {
-        let keypair = super::generate();
+        let keypair = super::KeyPair::random();
 
         assert!(true)
     }
