@@ -1,21 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-pub enum OperationType {
-    Create,
-    Update,
-    Recover,
-    Deactivate,
-}
-
-struct Operation<T> {
-    did_unique_suffix: String,
-    operation_type: OperationType,
-    operation: T,
-}
-
-struct CreateOperation {}
-
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Clone)]
 struct Delta {
     patches: Vec<Patch>,
     update_commitment: String,
@@ -37,17 +22,17 @@ pub struct Service {
     service_endpoint: String,
 }
 
-#[derive(Debug, Serialize)]
-struct SuffixData {
+#[derive(Debug, Serialize, Clone)]
+pub(crate) struct SuffixData {
     #[serde(rename = "deltaHash")]
     delta_hash: String,
     #[serde(rename = "recoveryCommitment")]
     recovery_commitment: String,
-    #[serde(rename = "type")]
+    #[serde(rename = "type", skip_serializing_if = "Option::is_none")]
     data_type: Option<String>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Clone)]
 pub enum Patch {
     AddPublicKeys(Vec<PublicKey>),
     RemovePublicKeys(Vec<String>),
@@ -57,7 +42,7 @@ pub enum Patch {
     IetfJsonPatch,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub(crate) struct JsonWebKey {
     #[serde(rename = "kty")]
     key_type: String,
@@ -74,9 +59,14 @@ pub struct PublicKey {
     id: String,
     #[serde(rename = "type")]
     key_type: String,
-    purposes: Option<Vec<u8>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    purposes: Option<Vec<String>>,
+    #[serde(rename = "publicKeyJwk", skip_serializing_if = "Option::is_none")]
+    jwk: Option<JsonWebKey>,
 }
 
-pub mod multihash;
-pub mod secp256k1;
+mod did;
+mod encoder;
+mod multihash;
 pub mod operations;
+pub mod secp256k1;
