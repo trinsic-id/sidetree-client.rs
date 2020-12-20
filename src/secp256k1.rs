@@ -1,8 +1,11 @@
-use base64::URL_SAFE_NO_PAD;
 use secp256k1::{Message, PublicKey, RecoveryId, SecretKey, Signature};
 
-use crate::{encoder::encode_config, JsonWebKey};
+use crate::{
+    did::{JsonWebKey, Purpose},
+    encoder::encode,
+};
 
+#[derive(Debug, Clone)]
 pub struct KeyPair {
     public_key: PublicKey,
     secret_key: Option<SecretKey>,
@@ -24,7 +27,7 @@ impl KeyPair {
         )
     }
 
-    pub fn to_public_key(&self, id: String, purposes: Option<Vec<String>>) -> crate::PublicKey {
+    pub fn to_public_key(&self, id: String, purposes: Option<Purpose>) -> crate::PublicKey {
         let mut jwk: JsonWebKey = self.into();
         jwk.d = None;
 
@@ -35,26 +38,7 @@ impl KeyPair {
             jwk: Some(jwk),
         }
     }
-}
 
-impl From<&KeyPair> for JsonWebKey {
-    fn from(keypair: &KeyPair) -> Self {
-        let serialized_public_key = keypair.public_key.serialize();
-
-        JsonWebKey {
-            key_type: "EC".into(),
-            curve: "secp256k1".into(),
-            x: encode_config(serialized_public_key[1..33].as_ref(), URL_SAFE_NO_PAD),
-            y: encode_config(serialized_public_key[33..65].as_ref(), URL_SAFE_NO_PAD),
-            d: keypair
-                .secret_key
-                .as_ref()
-                .map(|secret_key| encode_config(secret_key.serialize(), URL_SAFE_NO_PAD)),
-        }
-    }
-}
-
-impl KeyPair {
     pub fn random() -> KeyPair {
         let mut seed = [0u8; 32];
         getrandom::getrandom(&mut seed).expect("couldn't generate random seed");
@@ -70,12 +54,29 @@ impl KeyPair {
     }
 }
 
+impl From<&KeyPair> for JsonWebKey {
+    fn from(keypair: &KeyPair) -> Self {
+        let serialized_public_key = keypair.public_key.serialize();
+
+        JsonWebKey {
+            key_type: "EC".into(),
+            curve: "secp256k1".into(),
+            x: encode(serialized_public_key[1..33].as_ref()),
+            y: encode(serialized_public_key[33..65].as_ref()),
+            d: keypair
+                .secret_key
+                .as_ref()
+                .map(|secret_key| encode(secret_key.serialize())),
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
     #[test]
     fn generate_random_key() {
         let keypair = super::KeyPair::random();
 
-        assert!(true)
+        assert!(matches!(keypair.secret_key, Some(_)));
     }
 }

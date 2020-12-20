@@ -13,6 +13,7 @@ getrandom = { version = "0.2", features = ["js"] }
 sha2 = "0.9"
 multihash = "0.13"
 base64 = "0.13"
+bitflags = "1.2"
 
 [dependencies.serde]
 default-features = false

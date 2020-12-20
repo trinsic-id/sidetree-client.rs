@@ -1,9 +1,5 @@
-use base64::{Config, URL_SAFE};
+use base64::{encode_config, URL_SAFE_NO_PAD};
 
 pub fn encode<T: AsRef<[u8]>>(value: T) -> String {
-    ::base64::encode_config(value, URL_SAFE)
-}
-
-pub fn encode_config<T: AsRef<[u8]>>(value: T, config: Config) -> String {
-    ::base64::encode_config(value, config)
+    encode_config(value, URL_SAFE_NO_PAD)
 }

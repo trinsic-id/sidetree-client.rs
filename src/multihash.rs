@@ -48,6 +48,7 @@ pub(crate) fn hash_then_encode(buffer: &[u8], algorithm: HashAlgorithm) -> Strin
 
 pub(crate) enum HashAlgorithm {
     Sha256,
+    #[allow(dead_code)]
     Sha3_256,
 }
 

@@ -1,29 +1,16 @@
-use serde::{Deserialize, Serialize};
+use did::{Document, PublicKey, Service};
+use serde::{ser::SerializeMap, Serialize};
+#[macro_use]
+extern crate bitflags;
 
 #[derive(Debug, Serialize, Clone)]
-struct Delta {
+pub struct Delta {
     patches: Vec<Patch>,
     update_commitment: String,
 }
 
 #[derive(Debug, Serialize, Clone)]
-pub struct Document {
-    #[serde(rename = "publicKeys")]
-    public_keys: Vec<PublicKey>,
-    services: Vec<Service>,
-}
-
-#[derive(Debug, Serialize, Clone)]
-pub struct Service {
-    id: String,
-    #[serde(rename = "type")]
-    service_type: String,
-    #[serde(rename = "serviceEndpoint")]
-    service_endpoint: String,
-}
-
-#[derive(Debug, Serialize, Clone)]
-pub(crate) struct SuffixData {
+pub struct SuffixData {
     #[serde(rename = "deltaHash")]
     delta_hash: String,
     #[serde(rename = "recoveryCommitment")]
@@ -32,7 +19,7 @@ pub(crate) struct SuffixData {
     data_type: Option<String>,
 }
 
-#[derive(Debug, Serialize, Clone)]
+#[derive(Debug, Clone)]
 pub enum Patch {
     AddPublicKeys(Vec<PublicKey>),
     RemovePublicKeys(Vec<String>),
@@ -42,27 +29,30 @@ pub enum Patch {
     IetfJsonPatch,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub(crate) struct JsonWebKey {
-    #[serde(rename = "kty")]
-    key_type: String,
-    #[serde(rename = "crv")]
-    curve: String,
-    x: String,
-    y: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    d: Option<String>,
-}
+impl Serialize for Patch {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        let mut map = serializer.serialize_map(None)?;
 
-#[derive(Debug, Serialize, Clone)]
-pub struct PublicKey {
-    id: String,
-    #[serde(rename = "type")]
-    key_type: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    purposes: Option<Vec<String>>,
-    #[serde(rename = "publicKeyJwk", skip_serializing_if = "Option::is_none")]
-    jwk: Option<JsonWebKey>,
+        match self {
+            Patch::AddPublicKeys(public_keys) => {
+                map.serialize_entry("action", "add-public-keys")?;
+                map.serialize_entry("publicKeys", public_keys)?;
+            }
+            Patch::RemovePublicKeys(_) => {}
+            Patch::AddServices(_) => {}
+            Patch::RemoveServices(_) => {}
+            Patch::Replace(document) => {
+                map.serialize_entry("action", "replace")?;
+                map.serialize_entry("document", document)?;
+            }
+            Patch::IetfJsonPatch => {}
+        }
+
+        map.end()
+    }
 }
 
 mod did;
