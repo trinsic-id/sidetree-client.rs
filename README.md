@@ -6,12 +6,38 @@ This library provides a set of client services to help work with DID operations 
 
 ## Requirements
 
-This library required sidetree node to be running and expose API interface. Check the [ION](https://github.com/decentralized-identity/ion) and [Element](https://github.com/decentralized-identity/element) implementations for running a node locally.
+This library requires sidetree node to be running and expose API interface. Check the [ION](https://github.com/decentralized-identity/ion) and [Element](https://github.com/decentralized-identity/element) implementations for running a node locally.
+
+## Usage
+
+You can use the library directly in your code, or use the provided CLI to generate requests in console.
+
+### Using the library in your code
 
 Install from [crates.io](https://crates.io/crates/sidetree-client)
 
 ```toml
 sidetree-client = "*"
+```
+
+### Using the CLI from terminal
+
+Install the CLI with
+
+```bash
+cargo install sidetree-client
+```
+
+Generate `create` request
+
+```
+sidetree-client create
+```
+
+See a list of all commands supported
+
+```
+sidetree-client --help
 ```
 
 ## Specifications
@@ -25,7 +51,7 @@ This library provides objects that are compatible with the API spec. The objects
 
 ### Create Operation
 
-To generate new DID, you can use the `create()` or `create_config()` methods.
+To generate new DID, you can use the `create()` or `create_config(OperationInput)` methods.
 
 #### Create new DID
 

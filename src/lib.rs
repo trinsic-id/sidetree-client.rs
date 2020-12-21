@@ -56,7 +56,10 @@ impl Serialize for Patch {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct Error {}
+pub enum Error<'a> {
+    MissingField(&'a str),
+    SerializationError,
+}
 
 mod did;
 mod encoder;

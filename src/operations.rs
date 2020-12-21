@@ -14,9 +14,35 @@ pub enum Operation {
 
 #[derive(Serialize, Debug, Clone, Default)]
 pub struct OperationInput {
-    signing_key: Option<PublicKey>,
+    public_keys: Option<Vec<PublicKey>>,
+    services: Option<Vec<Service>>,
     update_key: Option<JsonWebKey>,
     recovery_key: Option<JsonWebKey>,
+}
+
+impl OperationInput {
+    pub fn new() -> Self {
+        OperationInput::default()
+    }
+    pub fn with_public_keys(mut self, public_keys: Vec<PublicKey>) -> Self {
+        self.public_keys = Some(public_keys);
+        self
+    }
+
+    pub fn with_services(mut self, services: Vec<Service>) -> Self {
+        self.services = Some(services);
+        self
+    }
+
+    pub fn with_update_key(mut self, update_key: JsonWebKey) -> Self {
+        self.update_key = Some(update_key);
+        self
+    }
+
+    pub fn with_recovery_key(mut self, recovery_key: JsonWebKey) -> Self {
+        self.recovery_key = Some(recovery_key);
+        self
+    }
 }
 
 #[derive(Serialize, Debug, Clone)]
@@ -25,7 +51,7 @@ pub struct OperationOutput {
     did_suffix: String,
     update_key: JsonWebKey,
     recovery_key: JsonWebKey,
-    signing_key: PublicKey,
+    public_keys: Vec<PublicKey>,
 }
 
 impl Serialize for Operation {
@@ -47,15 +73,23 @@ impl Serialize for Operation {
     }
 }
 
-pub fn create() -> Result<OperationOutput, Error> {
-    let update_key = KeyPair::random();
-    let recovery_key = KeyPair::random();
-
+pub fn create<'a>() -> Result<OperationOutput, Error<'a>> {
     let signing_key = KeyPair::random();
     let signing_key_public = signing_key.to_public_key("key-1".into(), Some(Purpose::all()));
 
+    create_config(OperationInput::new().with_public_keys(vec![signing_key_public]))
+}
+
+pub fn create_config<'a>(config: OperationInput) -> Result<OperationOutput, Error<'a>> {
+    if let None = config.public_keys {
+        return Err(Error::MissingField("public_keys"));
+    }
+
+    let update_key = KeyPair::random();
+    let recovery_key = KeyPair::random();
+
     let document = Document {
-        public_keys: vec![signing_key_public.clone()],
+        public_keys: config.public_keys.clone().unwrap(),
         services: vec![],
     };
 
@@ -86,7 +120,7 @@ pub fn create() -> Result<OperationOutput, Error> {
     Ok(OperationOutput {
         update_key: (&update_key).into(),
         recovery_key: (&recovery_key).into(),
-        signing_key: signing_key_public,
+        public_keys: config.public_keys.unwrap(),
         operation_request: operation,
         did_suffix,
     })
@@ -94,7 +128,9 @@ pub fn create() -> Result<OperationOutput, Error> {
 
 #[cfg(test)]
 mod test {
-    use super::{create, Operation};
+    use crate::did::{JsonWebKey, PublicKey, Purpose};
+
+    use super::{create, create_config, Operation, OperationInput};
 
     #[test]
     fn generate_create_operation() {
@@ -107,5 +143,33 @@ mod test {
 
         println!("did:ion:{}", result.did_suffix);
         println!("{}", json.unwrap());
+    }
+
+    #[test]
+    fn generate_create_operation_with_input() {
+        let putblic_key = PublicKey {
+            id: "key-1".into(),
+            purposes: Some(Purpose::AUTHENTICATION | Purpose::CAPABILITY_DELEGATION),
+            key_type: "SampleVerificationKey2020".into(),
+            jwk: None,
+        };
+
+        let config = OperationInput::new().with_public_keys(vec![putblic_key]);
+
+        let result = create_config(config).unwrap();
+
+        assert!(matches!(result.operation_request, Operation::Create(_, _)));
+        assert!(result.did_suffix.len() > 0);
+    }
+
+    #[test]
+    fn create_configurable_input() {
+        let input = OperationInput::default()
+            .with_public_keys(vec![])
+            .with_update_key(JsonWebKey::default());
+
+        assert!(matches!(input.update_key, Some(_)));
+        assert!(matches!(input.public_keys, Some(_)));
+        assert!(input.public_keys.unwrap().is_empty());
     }
 }

@@ -1,0 +1,48 @@
+name: Sidetree Client
+version: "1.0"
+author: Tomislav Markovski <tomislav@trinsic.id>
+about: Generate DID operations for use with Sidetree API
+
+# All subcommands must be listed in the 'subcommand:' object, where the key to
+# the list is the name of the subcommand, and all settings for that command are
+# are part of a Hash object
+subcommands:
+    # The name of this subcommand will be 'subcmd' which can be accessed in your
+    # Rust code later
+    - create:
+        about: generate 'create' operation request
+        # Subcommand args are exactly like App args
+        args:
+            - keys:
+                long: keys
+                short: k
+                help: file containing public key definition in JSON
+                value_name: path to JSON file
+                takes_value: true
+            - services:
+                long: services
+                short: s
+                help: file containing service definition in JSON
+                value_name: path to JSON file
+                takes_value: true
+
+    - update:
+        about: generate 'update' operation request
+        # Subcommand args are exactly like App args
+        args:
+            - add-keys:
+                long: add-keys
+                help: file containing public key definition in JSON to be added
+                value_name: path to JSON file
+                takes_value: true
+            - add-services:
+                long: add-services
+                help: file containing service definition in JSON to be added
+                value_name: path to JSON file
+                takes_value: true
+            - remove-key-ids:
+                long: remove-key-ids
+                help: remove the specified key ids from the DID document
+                value_name: space separated list of key ids
+                takes_value: true
+                multiple: true
