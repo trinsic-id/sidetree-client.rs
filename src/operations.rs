@@ -1,3 +1,4 @@
+use crate::Error;
 use crate::{
     did::*,
     multihash::{canonicalize_then_double_hash_then_encode, canonicalize_then_hash_then_encode},
@@ -9,6 +10,22 @@ use serde::{ser::SerializeMap, Serialize};
 #[derive(Debug, Clone)]
 pub enum Operation {
     Create(SuffixData, Delta),
+}
+
+#[derive(Serialize, Debug, Clone, Default)]
+pub struct OperationInput {
+    signing_key: Option<PublicKey>,
+    update_key: Option<JsonWebKey>,
+    recovery_key: Option<JsonWebKey>,
+}
+
+#[derive(Serialize, Debug, Clone)]
+pub struct OperationOutput {
+    operation_request: Operation,
+    did_suffix: String,
+    update_key: JsonWebKey,
+    recovery_key: JsonWebKey,
+    signing_key: PublicKey,
 }
 
 impl Serialize for Operation {
@@ -30,7 +47,7 @@ impl Serialize for Operation {
     }
 }
 
-pub fn create() -> OperationResult {
+pub fn create() -> Result<OperationOutput, Error> {
     let update_key = KeyPair::random();
     let recovery_key = KeyPair::random();
 
@@ -66,22 +83,13 @@ pub fn create() -> OperationResult {
     let did_suffix = compute_unique_suffix(&suffix_data);
     let operation = Operation::Create(suffix_data, delta);
 
-    OperationResult {
+    Ok(OperationOutput {
         update_key: (&update_key).into(),
         recovery_key: (&recovery_key).into(),
         signing_key: signing_key_public,
-        operation,
+        operation_request: operation,
         did_suffix,
-    }
-}
-
-#[derive(Serialize, Debug, Clone)]
-pub struct OperationResult {
-    operation: Operation,
-    did_suffix: String,
-    update_key: JsonWebKey,
-    recovery_key: JsonWebKey,
-    signing_key: PublicKey,
+    })
 }
 
 #[cfg(test)]
@@ -90,13 +98,14 @@ mod test {
 
     #[test]
     fn generate_create_operation() {
-        let result = create();
-        let json = serde_json::to_string_pretty(&result.operation);
+        let result = create().unwrap();
+        let json = serde_json::to_string_pretty(&result.operation_request);
 
         assert!(matches!(json, Result::Ok(_)));
-        assert!(matches!(result.operation, Operation::Create(_, _)));
+        assert!(matches!(result.operation_request, Operation::Create(_, _)));
         assert!(result.did_suffix.len() > 0);
 
+        println!("did:ion:{}", result.did_suffix);
         println!("{}", json.unwrap());
     }
 }

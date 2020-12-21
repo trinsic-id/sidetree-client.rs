@@ -1,5 +1,5 @@
 [package]
-name = "sidetree"
+name = "sidetree-client"
 version = "0.1.0"
 authors = ["Tomislav Markovski <tomislav@trinsic.id>"]
 edition = "2018"

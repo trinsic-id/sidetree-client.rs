@@ -55,6 +55,9 @@ impl Serialize for Patch {
     }
 }
 
+#[derive(Debug, Clone, PartialEq)]
+pub struct Error {}
+
 mod did;
 mod encoder;
 mod multihash;
