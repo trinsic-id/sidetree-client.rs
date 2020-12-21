@@ -1,6 +1,6 @@
 # Rust client library for managing DID operations for [Sidetree](https://github.com/decentralized-identity/sidetree) API services
 
-This library provides a set of client services to help work with DID operations for the Sidetree REST API. The is to provide access to Sidetree based DID methods using a cross platform library.
+This library provides a set of client services to help work with DID operations for the Sidetree REST API. The goal is to provide access to Sidetree based DID methods using a cross platform library.
 
 ## Specifications
 
